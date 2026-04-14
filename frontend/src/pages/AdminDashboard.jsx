@@ -49,14 +49,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDemandData = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/predict/demand?time_window=${timeWindow}`);
+        const response = await fetch(`https://ambufy-ai.onrender.com/api/predict/demand?time_window=${timeWindow}`);
         if (response.ok) { const data = await response.json(); setZones(data.zones ||[]); }
       } catch (error) { console.error("Error:", error); }
     };
 
     const fetchFleetData = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/fleet/live');
+        const response = await fetch('https://ambufy-ai.onrender.com/api/fleet/live');
         if (response.ok) { const data = await response.json(); setFleet(data.ambulances ||[]); }
       } catch (error) { console.error("Error fetching fleet:", error); }
     };

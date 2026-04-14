@@ -35,10 +35,10 @@ const PatientApp = () => {
   const [routeCoords, setRouteCoords] = useState([]);
   const [scheduleTime, setScheduleTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
-  
+
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(pos => setCurrentPosition([pos.coords.latitude, pos.coords.longitude]));
-    fetch('http://127.0.0.1:8000/api/hospitals').then(res => res.json()).then(data => setHospitals(data));
+    fetch('https://ambufy-ai.onrender.com/api/hospitals').then(res => res.json()).then(data => setHospitals(data));
   }, []);
 
   // --- EXACT FIX: পেশেন্ট অ্যাপ রিয়েল-টাইম ট্রিপ স্ট্যাটাস সিঙ্ক ---
@@ -105,7 +105,7 @@ const PatientApp = () => {
     setStep('searching'); setError('');
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/patients/request-ambulance', {
+      const response = await fetch('https://ambufy-ai.onrender.com/api/patients/request-ambulance', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: formData.phone, emergency_type: formData.emergency_type, required_ambulance_type: formData.required_ambulance_type,
@@ -133,7 +133,7 @@ const PatientApp = () => {
 
   const handleConfirmBooking = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/patients/confirm-trip', {
+        const res = await fetch('https://ambufy-ai.onrender.com/api/patients/confirm-trip', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ trip_id: tripInfo.trip_id })
         });
