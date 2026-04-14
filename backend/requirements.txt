@@ -6,6 +6,7 @@ supabase>=2.3.0
 pandas==2.3.3
 numpy==2.4.2
 catboost==1.2.10
+lightgbm==4.6.0
 scikit-learn==1.8.0
 joblib==1.5.3
 requests==2.32.4
