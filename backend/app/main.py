@@ -5,7 +5,8 @@ from .routers import prediction, fleet, auth, patients, hospitals
 app = FastAPI(title="Ambufy AI Backend")
 
 origins = [
-    "http://localhost:5173",
+    "http://localhost:5173", # আপনার লোকাল কম্পিউটারের জন্য
+    "https://ambufy-ai.vercel.app" # আপনার লাইভ ওয়েবসাইটের জন্য
 ]
 
 app.add_middleware(
