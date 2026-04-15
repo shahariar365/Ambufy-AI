@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
-import { Siren, LoaderCircle, Hospital, Car, MapPin as MapPinIcon, Clock, Navigation, CheckCircle } from 'lucide-react';
+import { Siren, LoaderCircle, Hospital, Car, MapPin as MapPinIcon, Clock, Navigation, CheckCircle, XCircle } from 'lucide-react'; // XCircle ইমপোর্ট করা হলো
 import L from 'leaflet';
 import { supabase } from '../supabaseClient';
 
@@ -33,6 +33,7 @@ const PatientApp = () => {
   
   const locationInfo = useLocationInfo(currentPosition);
   const [routeCoords, setRouteCoords] = useState([]);
+  
   const [scheduleTime, setScheduleTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
 
@@ -41,44 +42,21 @@ const PatientApp = () => {
     fetch('https://ambufy-ai.onrender.com/api/hospitals').then(res => res.json()).then(data => setHospitals(data));
   }, []);
 
-  // --- EXACT FIX: পেশেন্ট অ্যাপ রিয়েল-টাইম ট্রিপ স্ট্যাটাস সিঙ্ক ---
+  // --- পেশেন্ট অ্যাপ রিয়েল-টাইম ট্রিপ স্ট্যাটাস সিঙ্ক ---
    useEffect(() => {
-    // যদি ট্রিপ আইডি না থাকে, তবে রিটার্ন করবে
     if (!tripInfo?.trip_id || step !== 'confirmed') {
         return;
     }
 
-    console.log("🔥 Subscribing to Trip ID:", tripInfo.trip_id); // এই লাইনটি চেক করবে আইডি ঠিক আছে কিনা
-
-    // চ্যানেলের নাম
     const patientTripChannel = supabase.channel(`patient-trip-${tripInfo.trip_id}-${Date.now()}`);
     
     patientTripChannel
-      .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'trips', 
-          filter: `id=eq.${tripInfo.trip_id}` 
-      }, (payload) => {
-        console.log("🚀 PATIENT RECEIVED UPDATE:", payload.new);
-        
-        // স্ট্যাটাস আপডেট করা
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trips', filter: `id=eq.${tripInfo.trip_id}` }, (payload) => {
         if (payload.new && payload.new.status) {
-            setTripInfo(prev => ({ 
-                ...prev, 
-                status: payload.new.status,
-                final_fare: payload.new.final_fare || prev.final_fare
-            }));
+            setTripInfo(prev => ({ ...prev, status: payload.new.status, final_fare: payload.new.final_fare || prev.final_fare }));
         }
       })
-      .subscribe((status, err) => {
-          if(status === 'SUBSCRIBED') {
-              console.log("✅ Patient Realtime Subscribed Successfully!");
-          }
-          if(err) {
-              console.error("❌ Patient Subscription Error:", err);
-          }
-      });
+      .subscribe();
 
     return () => { supabase.removeChannel(patientTripChannel); };
   }, [tripInfo?.trip_id, step]);
@@ -90,10 +68,7 @@ const PatientApp = () => {
     const patientAmbChannel = supabase.channel(`patient-amb-${tripInfo.ambulance.id}-${Date.now()}`);
     patientAmbChannel
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ambulances', filter: `id=eq.${tripInfo.ambulance.id}` }, (payload) => {
-        setTripInfo(prev => ({
-          ...prev, 
-          ambulance: { ...prev.ambulance, current_lat: payload.new.current_lat, current_lng: payload.new.current_lng }
-        }));
+        setTripInfo(prev => ({ ...prev, ambulance: { ...prev.ambulance, current_lat: payload.new.current_lat, current_lng: payload.new.current_lng } }));
       })
       .subscribe();
 
@@ -148,7 +123,9 @@ const PatientApp = () => {
 
   const ambPos = tripInfo?.ambulance ? [tripInfo.ambulance.current_lat, tripInfo.ambulance.current_lng] : null;
   const hosPos = tripInfo?.hospital ? [tripInfo.hospital.latitude, tripInfo.hospital.longitude] : null;
-
+  
+  // চেক করা হচ্ছে ট্রিপ ক্যানসেল হয়েছে কিনা
+  const isCancelled = tripInfo?.status === 'cancelled';
 
   return (
     <div className="grow relative">
@@ -157,10 +134,12 @@ const PatientApp = () => {
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <Marker position={currentPosition}><Popup>Your Location</Popup></Marker>
           
-          {(step === 'payment' || step === 'confirmed') && ambPos && <Marker position={ambPos} icon={ambulanceIcon}><Popup>Ambulance</Popup></Marker>}
-          {(step === 'payment' || step === 'confirmed') && hosPos && <Marker position={hosPos} icon={hospitalIcon}><Popup>Hospital</Popup></Marker>}
-          {(step === 'payment' || step === 'confirmed') && routeCoords.length > 0 ? <Polyline positions={routeCoords} color="#3b82f6" weight={5} opacity={0.7} /> 
-          : (step === 'payment' || step === 'confirmed') && ambPos ? <Polyline positions={[ambPos, currentPosition]} color="red" dashArray="5, 10" /> : null}
+          {/* ট্রিপ ক্যানসেল হলে ম্যাপে অ্যাম্বুলেন্স এবং হসপিটাল দেখাবে না */}
+          {!isCancelled && (step === 'payment' || step === 'confirmed') && ambPos && <Marker position={ambPos} icon={ambulanceIcon}><Popup>Ambulance</Popup></Marker>}
+          {!isCancelled && (step === 'payment' || step === 'confirmed') && hosPos && <Marker position={hosPos} icon={hospitalIcon}><Popup>Hospital</Popup></Marker>}
+          
+          {!isCancelled && (step === 'payment' || step === 'confirmed') && routeCoords.length > 0 ? <Polyline positions={routeCoords} color="#3b82f6" weight={5} opacity={0.7} /> 
+          : !isCancelled && (step === 'payment' || step === 'confirmed') && ambPos ? <Polyline positions={[ambPos, currentPosition]} color="red" dashArray="5, 10" /> : null}
         </MapContainer>
       </div>
       
@@ -179,50 +158,33 @@ const PatientApp = () => {
                 <option value="Cardiac">Cardiac</option><option value="Trauma">Trauma</option><option value="Respiratory">Respiratory</option><option value="Pregnancy">Pregnancy</option><option value="Other">Other</option>
               </select>
               <select name="required_ambulance_type" onChange={(e) => setFormData({...formData, required_ambulance_type: e.target.value})} className="w-full p-3 border rounded-lg bg-gray-50 outline-none">
-                <option value="Any">Any Type</option><option value="ICU">ICU</option><option value="AC">AC</option><option value="Non-AC">Non-AC</option><option value="BLS">BLS</option><option value="ALS">ALS</option><option value="Freezer">Freezer</option>
+                {/* EXACT FIX: Freezer এর বানান Frezer করা হয়েছে যাতে ডাটাবেসের Enum এর সাথে মেলে */}
+                <option value="Any">Any Type</option><option value="ICU">ICU</option><option value="AC">AC</option><option value="Non-AC">Non-AC</option><option value="BLS">BLS</option><option value="ALS">ALS</option><option value="Frezer">Frezer</option>
               </select>
             </div>
             <select name="hospital_id" onChange={(e) => setFormData({...formData, hospital_id: e.target.value})} className="w-full p-3 border rounded-lg bg-gray-50 outline-none">
               <option value="">Nearest Suitable Hospital (Auto)</option>
               {hospitals.map(h => <option key={h.id} value={h.id}>{h.hospital_name}</option>)}
             </select>
+            
             <div className="grid grid-cols-2 gap-3 mt-4">
-  <button type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-md hover:bg-red-700">
-    <Siren size={18} /> Request Now
-  </button>
-  <button 
-    type="button" 
-    onClick={() => setIsScheduling(!isScheduling)} 
-    className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-md hover:bg-slate-900"
-  >
-    <Clock size={18} /> Schedule
-  </button>
-</div>
+              <button type="submit" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-md hover:bg-red-700">
+                <Siren size={18} /> Request Now
+              </button>
+              <button type="button" onClick={() => setIsScheduling(!isScheduling)} className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-md hover:bg-slate-900">
+                <Clock size={18} /> Schedule
+              </button>
+            </div>
 
-{/* যদি Schedule বাটন চাপে, তবে টাইম পিকার দেখাবে */}
-{isScheduling && (
-  <div className="mt-4 p-4 bg-slate-100 rounded-xl border animate-fade-in-up">
-    <label className="block text-sm font-semibold text-slate-700 mb-2">Select Date & Time</label>
-    <input 
-      type="datetime-local" 
-      value={scheduleTime}
-      onChange={(e) => setScheduleTime(e.target.value)}
-      className="w-full p-3 border rounded-lg outline-none focus:border-slate-800 mb-3"
-    />
-    <button 
-      type="button" 
-      onClick={() => {
-        if(!scheduleTime) { alert("Please select a time."); return; }
-        alert(`Trip Scheduled for ${new Date(scheduleTime).toLocaleString()}.\n\n(Backend Cron Job integration required for auto-dispatch)`);
-        setStep('form');
-        setIsScheduling(false);
-      }}
-      className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg shadow-md"
-    >
-      Confirm Schedule
-    </button>
-  </div>
-)}
+            {isScheduling && (
+              <div className="mt-4 p-4 bg-slate-100 rounded-xl border animate-fade-in-up">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Select Date & Time</label>
+                <input type="datetime-local" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} className="w-full p-3 border rounded-lg outline-none focus:border-slate-800 mb-3"/>
+                <button type="button" onClick={() => { if(!scheduleTime) { alert("Please select a time."); return; } alert(`Trip Scheduled for ${new Date(scheduleTime).toLocaleString()}.\n\n(Backend Cron Job integration required for auto-dispatch)`); setStep('form'); setIsScheduling(false); }} className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg shadow-md">
+                  Confirm Schedule
+                </button>
+              </div>
+            )}
           </form>
         )}
         
@@ -253,6 +215,18 @@ const PatientApp = () => {
         {step === 'confirmed' && tripInfo && (
             <div className="text-center py-4">
                 
+                {/* EXACT FIX: Driver Cancel করলে এই UI টি দেখাবে */}
+                {tripInfo.status === 'cancelled' && (
+                    <div className="animate-fade-in-up">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><XCircle className="text-red-600" size={32} /></div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Request Cancelled</h2>
+                        <p className="text-slate-600 mb-6 font-medium">Sorry, the driver had to decline your request. Please try finding another ambulance.</p>
+                        <button onClick={() => { setStep('form'); setTripInfo(null); }} className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-slate-900">
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
                 {tripInfo.status === 'pending_driver' && (
                     <><div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><Siren className="text-blue-600" size={32} /></div>
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Waiting for Driver</h2>
@@ -298,7 +272,7 @@ const PatientApp = () => {
                 )}
                 
                 {['pending_driver', 'accepted'].includes(tripInfo.status) && (
-                   <button onClick={() => setStep('form')} className="text-sm font-semibold text-slate-500 hover:text-red-500 underline mt-4">Cancel Trip</button>
+                   <button onClick={() => { setStep('form'); setTripInfo(null); }} className="text-sm font-semibold text-slate-500 hover:text-red-500 underline mt-4">Cancel Trip</button>
                 )}
             </div>
         )}
