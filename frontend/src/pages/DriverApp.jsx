@@ -163,7 +163,7 @@ const DriverApp = () => {
       </MapContainer>
 
       {/* Top Header */}
-      <div className="absolute top-0 left-0 w-full z-10 p-4">
+      <div className="absolute top-0 left-0 w-full z-10 p-4 pt-10 md:pt-4">
           <div className="bg-white/90 backdrop-blur-sm shadow-lg rounded-xl p-2 w-full flex justify-between items-center">
             <div className='ml-2'>
               <h1 className="text-lg font-bold text-slate-800">{driver.full_name}</h1>
