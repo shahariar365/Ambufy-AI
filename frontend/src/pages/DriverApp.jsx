@@ -148,13 +148,12 @@ const DriverApp = () => {
   }
 
   // --- JSX Rendering ---
-  if (!driver || !currentPosition) { return <div className="h-screen flex items-center justify-center font-bold text-lg text-slate-600">Loading Driver Dashboard...</div>; }
-
+  if (!driver || !currentPosition) { return <div className="h-dvh flex items-center justify-center font-bold text-lg text-slate-600">Loading Driver Dashboard...</div>; }
   const targetPosition = activeTrip && (activeTrip.status === 'accepted' ? [activeTrip.start_location_lat, activeTrip.start_location_lng] : activeTrip.status === 'enroute_to_hospital' ? [activeTrip.hospital_data.latitude, activeTrip.hospital_data.longitude] : null);
   const targetIcon = activeTrip && (activeTrip.status === 'accepted' ? patientIcon : hospitalIcon);
   
   return (
-    <div className="grow relative">
+    <div className="grow relative h-dvh overflow-hidden">
       {/* Map Layer */}
       <MapContainer center={currentPosition} zoom={16} scrollWheelZoom={true} className="h-full w-full absolute top-0 left-0 z-0">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

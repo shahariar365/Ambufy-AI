@@ -119,8 +119,7 @@ const PatientApp = () => {
       } catch (e) { console.error(e); }
   };
 
-  if (!currentPosition) return <div className="flex h-screen items-center justify-center font-bold text-slate-500">Fetching your location...</div>;
-
+if (!currentPosition) return <div className="flex h-dvh items-center justify-center font-bold text-slate-500">Fetching your location...</div>;
   const ambPos = tripInfo?.ambulance ? [tripInfo.ambulance.current_lat, tripInfo.ambulance.current_lng] : null;
   const hosPos = tripInfo?.hospital ? [tripInfo.hospital.latitude, tripInfo.hospital.longitude] : null;
   
@@ -128,7 +127,7 @@ const PatientApp = () => {
   const isCancelled = tripInfo?.status === 'cancelled';
 
   return (
-    <div className="grow relative">
+    <div className="grow relative h-dvh overflow-hidden">
       <div className="absolute top-0 left-0 h-full w-full z-0">
         <MapContainer center={currentPosition} zoom={15} scrollWheelZoom={true} className="h-full w-full">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
