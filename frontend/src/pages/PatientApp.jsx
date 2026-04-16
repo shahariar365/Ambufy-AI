@@ -142,7 +142,7 @@ if (!currentPosition) return <div className="flex h-dvh items-center justify-cen
         </MapContainer>
       </div>
       
-      <div className="absolute bottom-0 w-full z-10 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] p-6 max-w-lg mx-auto left-0 right-0">
+      <div className="fixed bottom-0 left-0 w-full z-[1000] bg-white shadow-[0_-15px_40px_rgba(0,0,0,0.15)] p-5 rounded-t-3xl pb-8 md:pb-5">
         
         {step === 'form' && (
           <form onSubmit={(e) => { e.preventDefault(); handleRequest(); }} className="space-y-4">

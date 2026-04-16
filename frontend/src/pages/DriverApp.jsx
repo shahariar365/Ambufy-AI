@@ -163,7 +163,7 @@ const DriverApp = () => {
       </MapContainer>
 
       {/* Top Header */}
-      <div className="absolute top-0 left-0 w-full z-10 p-4 pt-10 md:pt-4">
+      <div className="absolute top-0 left-0 w-full z-10 p-4 pt-5 md:pt-4">
           <div className="bg-white/90 backdrop-blur-sm shadow-lg rounded-xl p-2 w-full flex justify-between items-center">
             <div className='ml-2'>
               <h1 className="text-lg font-bold text-slate-800">{driver.full_name}</h1>
@@ -195,7 +195,7 @@ const DriverApp = () => {
       )}
 
       {/* Bottom Action Area (Status Buttons & Payment Screen) */}
-      <div className="absolute bottom-0 left-0 w-full z-10 bg-white shadow-[0_-5px_15px_rgba(0,0,0,0.1)] p-5 rounded-t-2xl">
+      <div className="fixed bottom-0 left-0 w-full z-[1000] bg-white shadow-[0_-15px_40px_rgba(0,0,0,0.15)] p-5 rounded-t-3xl pb-8 md:pb-5">
         {!ambulance ? ( <div className='text-center font-bold text-red-500 py-2'>No ambulance assigned.</div> ) 
          : activeTrip ? (
              activeTrip.status === 'completed' ? (
