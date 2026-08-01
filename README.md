@@ -160,7 +160,7 @@ A critical challenge in developing this system was the scarcity of open-source, 
 
 ### For Clone the Repository
 ```bash
-git clone [https://github.com/your-username/respon-time-ai.git](https://github.com/your-username/respon-time-ai.git)
+git clone https://github.com/shahariar365/Ambufy-AI.git
 cd respon-time-ai
 
 
